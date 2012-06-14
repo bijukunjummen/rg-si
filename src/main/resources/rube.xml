@@ -17,7 +17,14 @@
 		http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
 		
 		<import resource="broker.xml"/>
+
+		<int:channel id="requestChannel">
+		</int:channel>
 		
-		
+		<int:channel id="responseChannel">
+		</int:channel>	
+			
+		<int:gateway id="echoGateway" service-interface="org.bk.rube.EchoGateway" default-request-channel="requestChannel" default-reply-channel="responseChannel"/>
+		<int:bridge input-channel="requestChannel" output-channel="responseChannel"></int:bridge>
 
 </beans>
