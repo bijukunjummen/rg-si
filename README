@@ -1,43 +1,43 @@
-<a href="http://www.springsource.org/spring-integration">Spring Integration</a> provides a very nice abstraction over some complexities involved with Integrating systems together - Spring Integration fits the definition of a Facade perfectly from an Integration perspective- something that provides a simplified access to a complicated underlying system.
+[Spring Integration](http://www.springsource.org/spring-integration) provides a very nice abstraction over some complexities involved with Integrating systems together - Spring Integration fits the definition of a Facade perfectly from an Integration perspective- something that provides a simplified access to a complicated underlying system.
 
 To illustrate this point, consider a simple system, which just takes in a message, and sends it back capitalized, call it the Echo Gateway:
 
-<pre class="brush:java">public interface EchoGateway { 
-    String echo(String message);
-}
-</pre>
+  public interface EchoGateway { 
+      String echo(String message);
+  }
+
 
 and a test for this:
-<pre class="brush:java">  
-  @Test
-  public void testEcho() throws Exception{
-    String amessage = "Hello from Spring Integration";
-    
-    String response = echoGateway.echo(amessage);
-    assertThat(response, is("HELLO FROM SPRING INTEGRATION"));
-  }
-</pre>
+  
+    @Test
+    public void testEcho() throws Exception{
+      String amessage = "Hello from Spring Integration";
+      
+      String response = echoGateway.echo(amessage);
+      assertThat(response, is("HELLO FROM SPRING INTEGRATION"));
+    }
+
 
 
 Sounds simple so far, an implementation using spring integration would take in the "message" and "transform" it by converting to its upper case and returning the enhanced message.
 
-<pre>
-<?xml version="1.0" encoding="UTF-8"?>
-<beans:beans xmlns="http://www.springframework.org/schema/integration"
-  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xmlns:beans="http://www.springframework.org/schema/beans"
-  xsi:schemaLocation="
-    http://www.springframework.org/schema/integration http://www.springframework.org/schema/integration/spring-integration-2.1.xsd
-    http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
-    
-    <channel id="requestChannel"/>
-    
-    <gateway id="echoGateway" service-interface="rube.simple.EchoGateway" default-request-channel="requestChannel" />
-    
-    <transformer input-channel="requestChannel" expression="payload.toUpperCase()" />   
-    
-</beans:beans>
-</pre>
+
+  <?xml version="1.0" encoding="UTF-8"?>
+  <beans:beans xmlns="http://www.springframework.org/schema/integration"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:beans="http://www.springframework.org/schema/beans"
+    xsi:schemaLocation="
+      http://www.springframework.org/schema/integration http://www.springframework.org/schema/integration/spring-integration-2.1.xsd
+      http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+      
+      <channel id="requestChannel"/>
+      
+      <gateway id="echoGateway" service-interface="rube.simple.EchoGateway" default-request-channel="requestChannel" />
+      
+      <transformer input-channel="requestChannel" expression="payload.toUpperCase()" />   
+      
+  </beans:beans>
+
 
 Works beautifully!!
 
@@ -47,85 +47,82 @@ The beauty of Spring Integration is that even if the Integration scenario grows 
 Consider a <a href="http://en.wikipedia.org/wiki/Rube_Goldberg">Rube Goldberg</a> integration scenario: 
 
 First a diagram to describe the convoluted flow:
-<a href="http://2.bp.blogspot.com/-WS1I7ZpcIpI/T-ExhNjayyI/AAAAAAAABFw/KWLsjkbFi2Q/s1600/rube.gif" imageanchor="1" style="margin-left: 1em; margin-right: 1em;"><img border="0" height="360" src="http://2.bp.blogspot.com/-WS1I7ZpcIpI/T-ExhNjayyI/AAAAAAAABFw/KWLsjkbFi2Q/s640/rube.gif" width="640" /></a>
+![Rube Flow]("http://2.bp.blogspot.com/-WS1I7ZpcIpI/T-ExhNjayyI/AAAAAAAABFw/KWLsjkbFi2Q/s640/rube.gif")
 
 
 So what exactly does it do:
 
 
-<ul>
-<li>It takes in a message of this type - "hello from spring integ",</li>
-<li>splits it up into individual words(hello, from, spring, integ),&nbsp;</li>
-<li>sends each word to a ActiveMQ queue,&nbsp;</li>
-<li>from the queue the word fragments are picked up by a enricher to capitalize each word,&nbsp;</li>
-<li>placing the response back into a response queue,&nbsp;</li>
-<li>It is picked up, resequenced based on the original sequence of the words,&nbsp;</li>
-<li>aggregated back into a sentence("HELLO FROM SPRING INTEG") and&nbsp;</li>
-<li>returned back to the application.</li>
-</ul>
+* It takes in a message of this type - "hello from spring integ",
+* splits it up into individual words(hello, from, spring, integ),
+* sends each word to a ActiveMQ queue,
+* from the queue the word fragments are picked up by a enricher to capitalize each word,
+* placing the response back into a response queue,
+* It is picked up, resequenced based on the original sequence of the words,
+* aggregated back into a sentence("HELLO FROM SPRING INTEG") and
+* returned back to the application.
+
 
 This is how a Spring Integration configuration this kind of flow would look like:
-<pre class="brush:xml">
-<?xml version="1.0" encoding="UTF-8"?>
-<beans:beans xmlns="http://www.springframework.org/schema/integration"
-  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xmlns:int-jms="http://www.springframework.org/schema/integration/jms"
-  xmlns:beans="http://www.springframework.org/schema/beans"
-  xsi:schemaLocation="
-    http://www.springframework.org/schema/jms http://www.springframework.org/schema/jms/spring-jms-3.0.xsd
-    http://www.springframework.org/schema/integration http://www.springframework.org/schema/integration/spring-integration-2.1.xsd
-    http://www.springframework.org/schema/integration/jms http://www.springframework.org/schema/integration/jms/spring-integration-jms-2.1.xsd
-    http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
-    
-    <beans:import resource="broker.xml"/>
 
-    <channel id="requestChannel">
-      <queue/>    
-    </channel>
-    
-    <channel id="responseChannel">
-      <queue/>
-    </channel>
+  <?xml version="1.0" encoding="UTF-8"?>
+  <beans:beans xmlns="http://www.springframework.org/schema/integration"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:int-jms="http://www.springframework.org/schema/integration/jms"
+    xmlns:beans="http://www.springframework.org/schema/beans"
+    xsi:schemaLocation="
+      http://www.springframework.org/schema/jms http://www.springframework.org/schema/jms/spring-jms-3.0.xsd
+      http://www.springframework.org/schema/integration http://www.springframework.org/schema/integration/spring-integration-2.1.xsd
+      http://www.springframework.org/schema/integration/jms http://www.springframework.org/schema/integration/jms/spring-integration-jms-2.1.xsd
+      http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+      
+      <beans:import resource="broker.xml"/>
 
-    <gateway id="echoGateway" service-interface="rube.complicated.EchoGateway" default-request-channel="requestChannel" default-reply-channel="responseChannel" default-reply-timeout="5000" />
-    
-    <channel id="toJmsOutbound"/>
-    
-    <splitter input-channel="requestChannel" output-channel="toJmsOutbound" expression="payload.split('\s')">
-    </splitter>
-    
-    <channel id="sequenceChannel">
-    </channel>
+      <channel id="requestChannel">
+        <queue/>    
+      </channel>
+      
+      <channel id="responseChannel">
+        <queue/>
+      </channel>
 
-    <int-jms:outbound-gateway request-channel="toJmsOutbound" reply-channel="sequenceChannel" request-destination="amq.outbound" extract-request-payload="true" />
+      <gateway id="echoGateway" service-interface="rube.complicated.EchoGateway" default-request-channel="requestChannel" default-reply-channel="responseChannel" default-reply-timeout="5000" />
+      
+      <channel id="toJmsOutbound"/>
+      
+      <splitter input-channel="requestChannel" output-channel="toJmsOutbound" expression="payload.split('\s')">
+      </splitter>
+      
+      <channel id="sequenceChannel">
+      </channel>
 
-    <channel id="enhanceMessageChannel"/>
-    <channel id="toReplyQueueChannel"/>
-    
-    <int-jms:inbound-gateway request-channel="enhanceMessageChannel" request-destination="amq.outbound" reply-channel="toReplyQueueChannel"/>
+      <int-jms:outbound-gateway request-channel="toJmsOutbound" reply-channel="sequenceChannel" request-destination="amq.outbound" extract-request-payload="true" />
 
-    <transformer input-channel="enhanceMessageChannel" expression="(payload + '').toUpperCase()" output-channel="toReplyQueueChannel"/>
-    
-    <resequencer input-channel="sequenceChannel" output-channel="aggregateChannel" release-partial-sequences="false"></resequencer>
-    
-    <aggregator input-channel="aggregateChannel" output-channel="responseChannel"  expression="T(com.google.common.base.Joiner).on(' ').join(![payload].toArray())"/>
-    
-    <poller id="poller" fixed-delay="500" default="true"/>
-    
-</beans:beans>
+      <channel id="enhanceMessageChannel"/>
+      <channel id="toReplyQueueChannel"/>
+      
+      <int-jms:inbound-gateway request-channel="enhanceMessageChannel" request-destination="amq.outbound" reply-channel="toReplyQueueChannel"/>
 
-</pre>
+      <transformer input-channel="enhanceMessageChannel" expression="(payload + '').toUpperCase()" output-channel="toReplyQueueChannel"/>
+      
+      <resequencer input-channel="sequenceChannel" output-channel="aggregateChannel" release-partial-sequences="false"></resequencer>
+      
+      <aggregator input-channel="aggregateChannel" output-channel="responseChannel"  expression="T(com.google.common.base.Joiner).on(' ').join(![payload].toArray())"/>
+      
+      <poller id="poller" fixed-delay="500" default="true"/>
+      
+  </beans:beans>
+
 
 There is so much complexity in this flow(hence the Rube Goldberg), however the facade that Spring Integration provides to the application continues to remain very simple.
 
-<pre class="brush:java">@Test
- public void testEcho() throws Exception{
-  String amessage = &quot;Hello from Spring Integration&quot;;
-  
-  String response = echoGateway.echo(amessage);
-  assertThat(response, is(&quot;HELLO FROM SPRING INTEGRATION&quot;));
- }
-</pre>
+   @Test
+   public void testEcho() throws Exception{
+    String amessage = &quot;Hello from Spring Integration&quot;;
+    
+    String response = echoGateway.echo(amessage);
+    assertThat(response, is(&quot;HELLO FROM SPRING INTEGRATION&quot;));
+   }
 
 This in my mind is the essence of Spring Integration 
 
