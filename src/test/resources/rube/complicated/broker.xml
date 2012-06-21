@@ -4,7 +4,7 @@
 	xmlns:amq="http://activemq.apache.org/schema/core"
 	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
 	http://activemq.apache.org/schema/core http://activemq.apache.org/schema/core/activemq-core.xsd">
-	
+ 
 	<amq:broker id="activeMQBroker" useJmx="false" persistent="false">
 		<amq:transportConnectors>
 			<amq:transportConnector uri="vm://localhost" />
@@ -14,8 +14,8 @@
 
 	<amq:connectionFactory id="connectionFactory" brokerURL="vm://localhost"/>
 
-	<amq:queue id="outbound" physicalName="amq.outbound" />
-	<amq:queue id="inbound" physicalName="amq.inbound" />
+	<amq:queue id="amq.outbound" physicalName="amq.outbound" />
+	<amq:queue id="amq.inbound" physicalName="amq.inbound" />
 
 
 </beans>
