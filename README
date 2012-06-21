@@ -8,31 +8,35 @@ To illustrate this point, consider a simple system, which just takes in a messag
 </pre>
 
 and a test for this:
-<pre class="brush:java">@Test
- public void testEcho() {
-  String response = echoGateway.echo("Hello");
-  assertThat(response, is("HELLO"));
- }
+<pre class="brush:java">  
+  @Test
+  public void testEcho() throws Exception{
+    String amessage = "Hello from Spring Integration";
+    
+    String response = echoGateway.echo(amessage);
+    assertThat(response, is("HELLO FROM SPRING INTEGRATION"));
+  }
 </pre>
 
 
 Sounds simple so far, an implementation using spring integration would take in the "message" and "transform" it by converting to its upper case and returning the enhanced message.
 
-<pre class="brush:xml">&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;
-&lt;beans:beans xmlns=&quot;http://www.springframework.org/schema/integration&quot;
- xmlns:xsi=&quot;http://www.w3.org/2001/XMLSchema-instance&quot;
- xmlns:beans=&quot;http://www.springframework.org/schema/beans&quot;
- xsi:schemaLocation=&quot;
-  http://www.springframework.org/schema/integration http://www.springframework.org/schema/integration/spring-integration-2.1.xsd
-  http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd&quot;&gt;
-  
-  &lt;channel id=&quot;requestChannel&quot;/&gt;
-  
-  &lt;gateway id=&quot;echoGateway&quot; service-interface=&quot;rube.simple.EchoGateway&quot; default-request-channel=&quot;requestChannel&quot; /&gt;
-  
-  &lt;transformer input-channel=&quot;requestChannel&quot; expression=&quot;payload.toUpperCase()&quot; /&gt;  
-  
-&lt;/beans:beans&gt;
+<pre>
+<?xml version="1.0" encoding="UTF-8"?>
+<beans:beans xmlns="http://www.springframework.org/schema/integration"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xmlns:beans="http://www.springframework.org/schema/beans"
+  xsi:schemaLocation="
+    http://www.springframework.org/schema/integration http://www.springframework.org/schema/integration/spring-integration-2.1.xsd
+    http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+    
+    <channel id="requestChannel"/>
+    
+    <gateway id="echoGateway" service-interface="rube.simple.EchoGateway" default-request-channel="requestChannel" />
+    
+    <transformer input-channel="requestChannel" expression="payload.toUpperCase()" />   
+    
+</beans:beans>
 </pre>
 
 Works beautifully!!
@@ -61,53 +65,55 @@ So what exactly does it do:
 </ul>
 
 This is how a Spring Integration configuration this kind of flow would look like:
-<pre class="brush:xml">&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;
-&lt;beans:beans xmlns=&quot;http://www.springframework.org/schema/integration&quot;
- xmlns:xsi=&quot;http://www.w3.org/2001/XMLSchema-instance&quot;
- xmlns:int-jms=&quot;http://www.springframework.org/schema/integration/jms&quot;
- xmlns:beans=&quot;http://www.springframework.org/schema/beans&quot;
- xsi:schemaLocation=&quot;
-  http://www.springframework.org/schema/jms http://www.springframework.org/schema/jms/spring-jms-3.0.xsd
-  http://www.springframework.org/schema/integration http://www.springframework.org/schema/integration/spring-integration-2.1.xsd
-  http://www.springframework.org/schema/integration/jms http://www.springframework.org/schema/integration/jms/spring-integration-jms-2.1.xsd
-  http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd&quot;&gt;
-  
-  &lt;beans:import resource=&quot;broker.xml&quot;/&gt;
+<pre class="brush:xml">
+<?xml version="1.0" encoding="UTF-8"?>
+<beans:beans xmlns="http://www.springframework.org/schema/integration"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xmlns:int-jms="http://www.springframework.org/schema/integration/jms"
+  xmlns:beans="http://www.springframework.org/schema/beans"
+  xsi:schemaLocation="
+    http://www.springframework.org/schema/jms http://www.springframework.org/schema/jms/spring-jms-3.0.xsd
+    http://www.springframework.org/schema/integration http://www.springframework.org/schema/integration/spring-integration-2.1.xsd
+    http://www.springframework.org/schema/integration/jms http://www.springframework.org/schema/integration/jms/spring-integration-jms-2.1.xsd
+    http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+    
+    <beans:import resource="broker.xml"/>
 
-  &lt;channel id=&quot;requestChannel&quot;&gt;
-   &lt;queue/&gt;  
-  &lt;/channel&gt;
-  
-  &lt;channel id=&quot;responseChannel&quot;&gt;
-   &lt;queue/&gt;
-  &lt;/channel&gt;
+    <channel id="requestChannel">
+      <queue/>    
+    </channel>
+    
+    <channel id="responseChannel">
+      <queue/>
+    </channel>
 
-  &lt;gateway id=&quot;echoGateway&quot; service-interface=&quot;rube.complicated.EchoGateway&quot; default-request-channel=&quot;requestChannel&quot; default-reply-channel=&quot;responseChannel&quot; default-reply-timeout=&quot;5000&quot; /&gt;
-  
-  &lt;channel id=&quot;toJmsOutbound&quot;/&gt;
-  
-  &lt;splitter input-channel=&quot;requestChannel&quot; output-channel=&quot;toJmsOutbound&quot; expression=&quot;payload.split(&#39;\s&#39;)&quot;&gt;
-  &lt;/splitter&gt;
-  
-  &lt;channel id=&quot;sequenceChannel&quot;&gt;
-  &lt;/channel&gt;
+    <gateway id="echoGateway" service-interface="rube.complicated.EchoGateway" default-request-channel="requestChannel" default-reply-channel="responseChannel" default-reply-timeout="5000" />
+    
+    <channel id="toJmsOutbound"/>
+    
+    <splitter input-channel="requestChannel" output-channel="toJmsOutbound" expression="payload.split('\s')">
+    </splitter>
+    
+    <channel id="sequenceChannel">
+    </channel>
 
-  &lt;int-jms:outbound-gateway request-channel=&quot;toJmsOutbound&quot; reply-channel=&quot;sequenceChannel&quot; request-destination=&quot;amq.outbound&quot; extract-request-payload=&quot;true&quot; /&gt;
+    <int-jms:outbound-gateway request-channel="toJmsOutbound" reply-channel="sequenceChannel" request-destination="amq.outbound" extract-request-payload="true" />
 
-  &lt;channel id=&quot;enhanceMessageChannel&quot;/&gt;
-  &lt;channel id=&quot;toReplyQueueChannel&quot;/&gt;
-  
-  &lt;int-jms:inbound-gateway request-channel=&quot;enhanceMessageChannel&quot; request-destination=&quot;amq.outbound&quot; reply-channel=&quot;toReplyQueueChannel&quot;/&gt;
+    <channel id="enhanceMessageChannel"/>
+    <channel id="toReplyQueueChannel"/>
+    
+    <int-jms:inbound-gateway request-channel="enhanceMessageChannel" request-destination="amq.outbound" reply-channel="toReplyQueueChannel"/>
 
-  &lt;transformer input-channel=&quot;enhanceMessageChannel&quot; expression=&quot;(payload + &#39;&#39;).toUpperCase()&quot; output-channel=&quot;toReplyQueueChannel&quot;/&gt;
-  
-  &lt;resequencer input-channel=&quot;sequenceChannel&quot; output-channel=&quot;aggregateChannel&quot; release-partial-sequences=&quot;false&quot;&gt;&lt;/resequencer&gt;
-  
-  &lt;aggregator input-channel=&quot;aggregateChannel&quot; output-channel=&quot;responseChannel&quot;  expression=&quot;T(com.google.common.base.Joiner).on(&#39; &#39;).join(![payload].toArray())&quot;/&gt;
-  
-  &lt;poller id=&quot;poller&quot; fixed-delay=&quot;500&quot; default=&quot;true&quot;/&gt;
-  
-&lt;/beans:beans&gt;
+    <transformer input-channel="enhanceMessageChannel" expression="(payload + '').toUpperCase()" output-channel="toReplyQueueChannel"/>
+    
+    <resequencer input-channel="sequenceChannel" output-channel="aggregateChannel" release-partial-sequences="false"></resequencer>
+    
+    <aggregator input-channel="aggregateChannel" output-channel="responseChannel"  expression="T(com.google.common.base.Joiner).on(' ').join(![payload].toArray())"/>
+    
+    <poller id="poller" fixed-delay="500" default="true"/>
+    
+</beans:beans>
+
 </pre>
 
 There is so much complexity in this flow(hence the Rube Goldberg), however the facade that Spring Integration provides to the application continues to remain very simple.
