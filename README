@@ -2,9 +2,9 @@
 
 To illustrate this point, consider a simple system, which just takes in a message, and sends it back capitalized, call it the Echo Gateway:
 
-  public interface EchoGateway { 
-      String echo(String message);
-  }
+    public interface EchoGateway { 
+        String echo(String message);
+    }
 
 
 and a test for this:
@@ -22,21 +22,21 @@ and a test for this:
 Sounds simple so far, an implementation using spring integration would take in the "message" and "transform" it by converting to its upper case and returning the enhanced message.
 
 
-  <?xml version="1.0" encoding="UTF-8"?>
-  <beans:beans xmlns="http://www.springframework.org/schema/integration"
-    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xmlns:beans="http://www.springframework.org/schema/beans"
-    xsi:schemaLocation="
-      http://www.springframework.org/schema/integration http://www.springframework.org/schema/integration/spring-integration-2.1.xsd
-      http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
-      
-      <channel id="requestChannel"/>
-      
-      <gateway id="echoGateway" service-interface="rube.simple.EchoGateway" default-request-channel="requestChannel" />
-      
-      <transformer input-channel="requestChannel" expression="payload.toUpperCase()" />   
-      
-  </beans:beans>
+    <?xml version="1.0" encoding="UTF-8"?>
+    <beans:beans xmlns="http://www.springframework.org/schema/integration"
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xmlns:beans="http://www.springframework.org/schema/beans"
+      xsi:schemaLocation="
+        http://www.springframework.org/schema/integration http://www.springframework.org/schema/integration/spring-integration-2.1.xsd
+        http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+        
+        <channel id="requestChannel"/>
+        
+        <gateway id="echoGateway" service-interface="rube.simple.EchoGateway" default-request-channel="requestChannel" />
+        
+        <transformer input-channel="requestChannel" expression="payload.toUpperCase()" />   
+        
+    </beans:beans>
 
 
 Works beautifully!!
@@ -65,65 +65,64 @@ So what exactly does it do:
 
 This is how a Spring Integration configuration this kind of flow would look like:
 
-  <?xml version="1.0" encoding="UTF-8"?>
-  <beans:beans xmlns="http://www.springframework.org/schema/integration"
-    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xmlns:int-jms="http://www.springframework.org/schema/integration/jms"
-    xmlns:beans="http://www.springframework.org/schema/beans"
-    xsi:schemaLocation="
-      http://www.springframework.org/schema/jms http://www.springframework.org/schema/jms/spring-jms-3.0.xsd
-      http://www.springframework.org/schema/integration http://www.springframework.org/schema/integration/spring-integration-2.1.xsd
-      http://www.springframework.org/schema/integration/jms http://www.springframework.org/schema/integration/jms/spring-integration-jms-2.1.xsd
-      http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
-      
-      <beans:import resource="broker.xml"/>
+    <?xml version="1.0" encoding="UTF-8"?>
+    <beans:beans xmlns="http://www.springframework.org/schema/integration"
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xmlns:int-jms="http://www.springframework.org/schema/integration/jms"
+      xmlns:beans="http://www.springframework.org/schema/beans"
+      xsi:schemaLocation="
+        http://www.springframework.org/schema/jms http://www.springframework.org/schema/jms/spring-jms-3.0.xsd
+        http://www.springframework.org/schema/integration http://www.springframework.org/schema/integration/spring-integration-2.1.xsd
+        http://www.springframework.org/schema/integration/jms http://www.springframework.org/schema/integration/jms/spring-integration-jms-2.1.xsd
+        http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+        
+        <beans:import resource="broker.xml"/>
 
-      <channel id="requestChannel">
-        <queue/>    
-      </channel>
-      
-      <channel id="responseChannel">
-        <queue/>
-      </channel>
+        <channel id="requestChannel">
+          <queue/>    
+        </channel>
+        
+        <channel id="responseChannel">
+          <queue/>
+        </channel>
 
-      <gateway id="echoGateway" service-interface="rube.complicated.EchoGateway" default-request-channel="requestChannel" default-reply-channel="responseChannel" default-reply-timeout="5000" />
-      
-      <channel id="toJmsOutbound"/>
-      
-      <splitter input-channel="requestChannel" output-channel="toJmsOutbound" expression="payload.split('\s')">
-      </splitter>
-      
-      <channel id="sequenceChannel">
-      </channel>
+        <gateway id="echoGateway" service-interface="rube.complicated.EchoGateway" default-request-channel="requestChannel" default-reply-channel="responseChannel" default-reply-timeout="5000" />
+        
+        <channel id="toJmsOutbound"/>
+        
+        <splitter input-channel="requestChannel" output-channel="toJmsOutbound" expression="payload.split('\s')">
+        </splitter>
+        
+        <channel id="sequenceChannel">
+        </channel>
 
-      <int-jms:outbound-gateway request-channel="toJmsOutbound" reply-channel="sequenceChannel" request-destination="amq.outbound" extract-request-payload="true" />
+        <int-jms:outbound-gateway request-channel="toJmsOutbound" reply-channel="sequenceChannel" request-destination="amq.outbound" extract-request-payload="true" />
 
-      <channel id="enhanceMessageChannel"/>
-      <channel id="toReplyQueueChannel"/>
-      
-      <int-jms:inbound-gateway request-channel="enhanceMessageChannel" request-destination="amq.outbound" reply-channel="toReplyQueueChannel"/>
+        <channel id="enhanceMessageChannel"/>
+        <channel id="toReplyQueueChannel"/>
+        
+        <int-jms:inbound-gateway request-channel="enhanceMessageChannel" request-destination="amq.outbound" reply-channel="toReplyQueueChannel"/>
 
-      <transformer input-channel="enhanceMessageChannel" expression="(payload + '').toUpperCase()" output-channel="toReplyQueueChannel"/>
-      
-      <resequencer input-channel="sequenceChannel" output-channel="aggregateChannel" release-partial-sequences="false"></resequencer>
-      
-      <aggregator input-channel="aggregateChannel" output-channel="responseChannel"  expression="T(com.google.common.base.Joiner).on(' ').join(![payload].toArray())"/>
-      
-      <poller id="poller" fixed-delay="500" default="true"/>
-      
-  </beans:beans>
+        <transformer input-channel="enhanceMessageChannel" expression="(payload + '').toUpperCase()" output-channel="toReplyQueueChannel"/>
+        
+        <resequencer input-channel="sequenceChannel" output-channel="aggregateChannel" release-partial-sequences="false"></resequencer>
+        
+        <aggregator input-channel="aggregateChannel" output-channel="responseChannel"  expression="T(com.google.common.base.Joiner).on(' ').join(![payload].toArray())"/>
+        
+        <poller id="poller" fixed-delay="500" default="true"/>
+        
+    </beans:beans>
 
 
 There is so much complexity in this flow(hence the Rube Goldberg), however the facade that Spring Integration provides to the application continues to remain very simple.
 
-   @Test
-   public void testEcho() throws Exception{
-    String amessage = &quot;Hello from Spring Integration&quot;;
-    
-    String response = echoGateway.echo(amessage);
-    assertThat(response, is(&quot;HELLO FROM SPRING INTEGRATION&quot;));
-   }
+     @Test
+     public void testEcho() throws Exception{
+      String amessage = &quot;Hello from Spring Integration&quot;;
+      
+      String response = echoGateway.echo(amessage);
+      assertThat(response, is(&quot;HELLO FROM SPRING INTEGRATION&quot;));
+     }
 
 This in my mind is the essence of Spring Integration 
 
-I have a github repository with this code at <a href="https://github.com/bijukunjummen/rg-si.git">https://github.com/bijukunjummen/rg-si.git</a>
