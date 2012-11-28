@@ -23,11 +23,9 @@
 		
 		<channel id="toJmsOutbound"/>
 		
-		<splitter input-channel="requestChannel" output-channel="toJmsOutbound" expression="payload.split('\s')">
-		</splitter>
+		<splitter input-channel="requestChannel" output-channel="toJmsOutbound" expression="payload.split('\s')" apply-sequence="true"/>
 		
-		<channel id="sequenceChannel">
-		</channel>
+		<channel id="sequenceChannel"/>
 
 		<int-jms:outbound-gateway request-channel="toJmsOutbound" reply-channel="sequenceChannel" request-destination="amq.outbound" extract-request-payload="true" />
 
