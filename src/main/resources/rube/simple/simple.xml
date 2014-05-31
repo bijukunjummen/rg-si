@@ -8,7 +8,7 @@
 		
 		<channel id="requestChannel"/>
 		
-		<gateway id="echoGateway" service-interface="simple.EchoGateway" default-request-channel="requestChannel" />
+		<gateway id="echoGateway" service-interface="rube.simple.EchoGateway" default-request-channel="requestChannel" />
 		
 		<transformer input-channel="requestChannel" expression="payload.toUpperCase()" />		
 		
