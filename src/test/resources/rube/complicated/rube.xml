@@ -1,45 +1,45 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <beans:beans xmlns="http://www.springframework.org/schema/integration"
-	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xmlns:int-jms="http://www.springframework.org/schema/integration/jms"
-	xmlns:beans="http://www.springframework.org/schema/beans"
-	xsi:schemaLocation="
-		http://www.springframework.org/schema/jms http://www.springframework.org/schema/jms/spring-jms-3.0.xsd
-		http://www.springframework.org/schema/integration http://www.springframework.org/schema/integration/spring-integration-2.1.xsd
-		http://www.springframework.org/schema/integration/jms http://www.springframework.org/schema/integration/jms/spring-integration-jms-2.1.xsd
+			 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+			 xmlns:int-jms="http://www.springframework.org/schema/integration/jms"
+			 xmlns:beans="http://www.springframework.org/schema/beans"
+			 xsi:schemaLocation="
+		http://www.springframework.org/schema/integration http://www.springframework.org/schema/integration/spring-integration.xsd
+		http://www.springframework.org/schema/integration/jms http://www.springframework.org/schema/integration/jms/spring-integration-jms.xsd
 		http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
-		
-		<beans:import resource="broker.xml"/>
 
-		<channel id="requestChannel">
-			<queue/>		
-		</channel>
-		
-		<channel id="responseChannel">
-			<queue/>
-		</channel>
+	<beans:import resource="broker.xml"/>
 
-		<gateway id="echoGateway" service-interface="rube.complicated.EchoGateway" default-request-channel="requestChannel" default-reply-channel="responseChannel" default-reply-timeout="5000" />
-		
-		<channel id="toJmsOutbound"/>
-		
-		<splitter input-channel="requestChannel" output-channel="toJmsOutbound" expression="payload.split('\s')" apply-sequence="true"/>
-		
-		<channel id="sequenceChannel"/>
+	<channel id="requestChannel">
+		<queue/>
+	</channel>
 
-		<int-jms:outbound-gateway request-channel="toJmsOutbound" reply-channel="sequenceChannel" request-destination="amq.outbound" extract-request-payload="true" />
+	<gateway id="echoGateway" service-interface="rube.complicated.EchoGateway" default-request-channel="requestChannel"
+			 default-reply-timeout="5000"/>
 
-		<channel id="enhanceMessageChannel"/>
-		<channel id="toReplyQueueChannel"/>
-		
-		<int-jms:inbound-gateway request-channel="enhanceMessageChannel" request-destination="amq.outbound" reply-channel="toReplyQueueChannel"/>
+	<channel id="toJmsOutbound"/>
 
-		<transformer input-channel="enhanceMessageChannel" expression="(payload + '').toUpperCase()" output-channel="toReplyQueueChannel"/>
-		
-		<resequencer input-channel="sequenceChannel" output-channel="aggregateChannel" release-partial-sequences="false"></resequencer>
-		
-		<aggregator input-channel="aggregateChannel" output-channel="responseChannel"  expression="T(com.google.common.base.Joiner).on(' ').join(![payload].toArray())"/>
-		
-		<poller id="poller" fixed-delay="500" default="true"/>
-		
+	<splitter input-channel="requestChannel" output-channel="toJmsOutbound" expression="payload.split('\s')"
+			  apply-sequence="true"/>
+
+	<channel id="sequenceChannel"/>
+
+	<int-jms:outbound-gateway request-channel="toJmsOutbound" reply-channel="sequenceChannel"
+							  request-destination="amq.outbound" extract-request-payload="true"/>
+
+	<channel id="enhanceMessageChannel"/>
+
+	<int-jms:inbound-gateway request-channel="enhanceMessageChannel" request-destination="amq.outbound"/>
+
+	<transformer input-channel="enhanceMessageChannel" expression="(payload + '').toUpperCase()"/>
+
+	<channel id="aggregateChannel"/>
+
+	<resequencer input-channel="sequenceChannel" output-channel="aggregateChannel" release-partial-sequences="false"/>
+
+	<aggregator input-channel="aggregateChannel"
+				expression="T(com.google.common.base.Joiner).on(' ').join(![payload])"/>
+
+	<poller id="poller" fixed-delay="500" default="true"/>
+
 </beans:beans>

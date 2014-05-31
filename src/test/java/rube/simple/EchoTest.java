@@ -9,14 +9,14 @@ import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
-
-import rube.simple.EchoGateway;
+import simple.EchoGateway;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration("simple.xml")
 public class EchoTest {
 	
-	@Autowired EchoGateway echoGateway;
+	@Autowired
+	EchoGateway echoGateway;
 
 	@Test
 	public void testEcho() throws Exception{

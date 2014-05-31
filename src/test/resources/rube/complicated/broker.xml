@@ -11,11 +11,8 @@
 		</amq:transportConnectors>
 	</amq:broker>
 
-
 	<amq:connectionFactory id="connectionFactory" brokerURL="vm://localhost"/>
 
 	<amq:queue id="amq.outbound" physicalName="amq.outbound" />
-	<amq:queue id="amq.inbound" physicalName="amq.inbound" />
-
 
 </beans>

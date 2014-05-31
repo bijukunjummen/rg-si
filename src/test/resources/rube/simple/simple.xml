@@ -3,12 +3,12 @@
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xmlns:beans="http://www.springframework.org/schema/beans"
 	xsi:schemaLocation="
-		http://www.springframework.org/schema/integration http://www.springframework.org/schema/integration/spring-integration-2.1.xsd
+		http://www.springframework.org/schema/integration http://www.springframework.org/schema/integration/spring-integration.xsd
 		http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
 		
 		<channel id="requestChannel"/>
 		
-		<gateway id="echoGateway" service-interface="rube.simple.EchoGateway" default-request-channel="requestChannel" />
+		<gateway id="echoGateway" service-interface="simple.EchoGateway" default-request-channel="requestChannel" />
 		
 		<transformer input-channel="requestChannel" expression="payload.toUpperCase()" />		
 		

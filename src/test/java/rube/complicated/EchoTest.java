@@ -12,8 +12,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
-import rube.complicated.EchoGateway;
-
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration("rube.xml")
 public class EchoTest {
