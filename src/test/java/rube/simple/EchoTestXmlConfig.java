@@ -1,6 +1,4 @@
-package rube.complicated;
-
-
+package rube.simple;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
@@ -13,10 +11,11 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 @RunWith(SpringJUnit4ClassRunner.class)
-@ContextConfiguration("rube.xml")
-public class EchoTest {
+@ContextConfiguration("simple.xml")
+public class EchoTestXmlConfig {
 	
-	@Autowired EchoGateway echoGateway;
+	@Autowired
+	EchoGateway echoGateway;
 
 	@Test
 	public void testEcho() throws Exception{

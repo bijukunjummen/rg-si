@@ -8,7 +8,7 @@
 		http://www.springframework.org/schema/integration/jms http://www.springframework.org/schema/integration/jms/spring-integration-jms.xsd
 		http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
 
-	<beans:import resource="broker.xml"/>
+	<beans:import resource="classpath:/rube/complicated/broker.xml"/>
 
 	<channel id="requestChannel">
 		<queue/>
@@ -27,18 +27,13 @@
 	<int-jms:outbound-gateway request-channel="toJmsOutbound" reply-channel="sequenceChannel"
 							  request-destination="amq.outbound" extract-request-payload="true"/>
 
-	<channel id="enhanceMessageChannel"/>
-
-	<int-jms:inbound-gateway request-channel="enhanceMessageChannel" request-destination="amq.outbound"/>
-
-	<transformer input-channel="enhanceMessageChannel" expression="(payload + '').toUpperCase()"/>
-
 	<channel id="aggregateChannel"/>
 
 	<resequencer input-channel="sequenceChannel" output-channel="aggregateChannel" release-partial-sequences="false"/>
 
 	<aggregator input-channel="aggregateChannel"
 				expression="T(com.google.common.base.Joiner).on(' ').join(![payload])"/>
+
 
 	<poller id="poller" fixed-delay="500" default="true"/>
 
