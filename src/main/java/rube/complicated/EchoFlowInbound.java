@@ -19,14 +19,13 @@ public class EchoFlowInbound {
 
 	@Bean
 	public JmsMessageDrivenEndpoint jmsInbound() {
-		JmsMessageDrivenEndpoint jmsInbound = new JmsMessageDrivenEndpoint(listenerContainer(), messageListener());
-		return jmsInbound;
+		return new JmsMessageDrivenEndpoint(listenerContainer(), messageListener());
 	}
 
 	@Bean
 	public IntegrationFlow inboundFlow() {
 		return IntegrationFlows.from(enhanceMessageChannel())
-				.<String, String>transform(s -> s.toUpperCase())
+				.transform((String s) -> s.toUpperCase())
 				.get();
 	}
 

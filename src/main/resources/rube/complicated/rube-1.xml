@@ -10,9 +10,7 @@
 
 	<beans:import resource="classpath:/rube/complicated/broker.xml"/>
 
-	<channel id="requestChannel">
-		<queue/>
-	</channel>
+	<channel id="requestChannel"/>
 
 	<gateway id="echoGateway" service-interface="rube.complicated.EchoGateway" default-request-channel="requestChannel"
 			 default-reply-timeout="5000"/>
@@ -27,14 +25,13 @@
 	<int-jms:outbound-gateway request-channel="toJmsOutbound" reply-channel="sequenceChannel"
 							  request-destination="amq.outbound" extract-request-payload="true"/>
 
+
+	<!--On the way back from the queue-->
 	<channel id="aggregateChannel"/>
 
 	<resequencer input-channel="sequenceChannel" output-channel="aggregateChannel" release-partial-sequences="false"/>
 
 	<aggregator input-channel="aggregateChannel"
 				expression="T(com.google.common.base.Joiner).on(' ').join(![payload])"/>
-
-
-	<poller id="poller" fixed-delay="500" default="true"/>
 
 </beans:beans>
