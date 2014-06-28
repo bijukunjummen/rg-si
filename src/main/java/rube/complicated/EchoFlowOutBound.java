@@ -22,26 +22,10 @@ public class EchoFlowOutBound {
 	private ConnectionFactory connectionFactory;
 
 	@Bean
-	public DirectChannel sequenceChannel() {
-		return new DirectChannel();
-	}
-
-	@Bean
-	public DirectChannel requestChannel() {
-		return new DirectChannel();
-	}
-
-	@Bean
 	public IntegrationFlow toOutboundQueueFlow() {
-		return IntegrationFlows.from(requestChannel())
+		return IntegrationFlows.from("requestChannel")
 				.split(s -> s.applySequence(true).get().getT2().setDelimiters("\\s"))
 				.handle(jmsOutboundGateway())
-				.get();
-	}
-
-	@Bean
-	public IntegrationFlow flowOnReturnOfMessage() {
-		return IntegrationFlows.from(sequenceChannel())
 				.resequence()
 				.aggregate(aggregate ->
 						aggregate.outputProcessor(g ->
@@ -57,7 +41,6 @@ public class EchoFlowOutBound {
 		JmsOutboundGateway jmsOutboundGateway = new JmsOutboundGateway();
 		jmsOutboundGateway.setConnectionFactory(this.connectionFactory);
 		jmsOutboundGateway.setRequestDestinationName("amq.outbound");
-		jmsOutboundGateway.setReplyChannel(sequenceChannel());
 		return jmsOutboundGateway;
 	}
 }
